@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: 'ArialCustom';
+    src: url('../fonts/MontserratBlack-3zOvZ.ttf') format('opentype');
+    font-weight: 100;
+    font-style: italic;
+    font-display: swap;
+}
+h1
+{
+    color: #C3DBC5;
+}
+button:hover
+{
+    background: rgb(171, 66, 66);
+}

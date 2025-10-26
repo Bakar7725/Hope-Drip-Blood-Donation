@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom font */
+@font-face {
+  font-family: 'Telma';
+  src: url('../fonts/MeriendaOne-Regular.ttf') format('truetype');
+  font-weight: 100;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Keep font only, not color */
+h3 {
+  font-family: 'Telma', sans-serif;
+  font-weight: 10;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  text-decoration: none;
+  position: relative;
+}
+
+a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: white;
+  transition: width 0.5s ease;
+}
+
+a:hover::after {
+  width: 100%;
+}
+
+
+
+.button {
+  cursor: pointer;
+  border: 2px solid white; /* ✅ forces it to show */
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+
+button:hover {
+  border-color: #3B341F; /* ✅ Only color changes */
+}
