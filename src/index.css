@@ -24,3 +24,23 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #6366f1;
 }
+
+
+
+/* Force select dropdown to render above everything */
+.modal-container {
+  transform: translateZ(0);
+  isolation: isolate;
+}
+
+select {
+  position: relative;
+}
+
+/* This might help in some browsers */
+select:focus {
+  position: relative;
+  z-index: 9999;
+}
+
+
