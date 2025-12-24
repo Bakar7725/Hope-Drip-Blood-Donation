@@ -53,16 +53,16 @@ function Signin({ onClose, onLoginSuccess }) { // ✅ 'LoginSuccess' se 'onLogin
                     email: data.user?.email,
                     phone: data.user?.phone
                 };
-                
+
                 localStorage.setItem('user', JSON.stringify(safeUserData));
-                
+
                 // ✅ SUCCESS CALLBACK FIRST
                 if (onLoginSuccess) {
                     onLoginSuccess(); // ✅ Pehle callback call karo
                 }
 
                 setError("✅ Login successful!");
-                
+
                 // ✅ Phir modal close karo
                 setTimeout(() => {
                     onClose();
@@ -79,7 +79,7 @@ function Signin({ onClose, onLoginSuccess }) { // ✅ 'LoginSuccess' se 'onLogin
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50">
             <div className='bg-[#0f1f1f] p-6 rounded-lg w-80 relative'>
                 <div className='flex justify-end absolute top-3 right-3'>
-                    <button 
+                    <button
                         className='text-[#e0e8e1] text-xl cursor-pointer hover:bg-[#234444] rounded p-1'
                         onClick={onClose}
                         disabled={loading}
@@ -89,11 +89,10 @@ function Signin({ onClose, onLoginSuccess }) { // ✅ 'LoginSuccess' se 'onLogin
                 </div>
 
                 {error && (
-                    <div className={`text-center mb-4 p-2 rounded-md text-sm ${
-                        error.startsWith("✅") 
-                            ? "bg-green-700/30 text-green-300" 
+                    <div className={`text-center mb-4 p-2 rounded-md text-sm ${error.startsWith("✅")
+                            ? "bg-green-700/30 text-green-300"
                             : "bg-red-700/30 text-red-300"
-                    }`}>
+                        }`}>
                         {error}
                     </div>
                 )}
@@ -103,37 +102,37 @@ function Signin({ onClose, onLoginSuccess }) { // ✅ 'LoginSuccess' se 'onLogin
                         <img src={logo} alt="Hope Drip Logo" className="w-9 h-8" />
                         <h3 className="text-[#c2d8c4] text-xl font-bold">Hope Drip</h3>
                         <p className='text-gray-400 text-sm'>Sign in to continue</p>
-                        
+
                         <div className='mt-4 w-full'>
-                            <input 
-                                type='text' 
+                            <input
+                                type='text'
                                 name='identifier'
-                                placeholder='Email or Phone' 
+                                placeholder='Email or Phone'
                                 value={loginData.identifier}
                                 onChange={handleChange}
                                 className='h-10 w-full rounded-lg p-3 outline-none border border-gray-600 bg-transparent text-white mb-3 focus:border-[#c2d8c4]'
                                 disabled={loading}
                             />
-                            <input 
-                                type='password' 
+                            <input
+                                type='password'
                                 name='password'
-                                placeholder='Password' 
+                                placeholder='Password'
                                 value={loginData.password}
                                 onChange={handleChange}
                                 className='h-10 w-full rounded-lg p-3 outline-none border border-gray-600 bg-transparent text-white focus:border-[#c2d8c4]'
                                 disabled={loading}
                             />
                         </div>
-                        
+
                         <div className='flex justify-between items-center w-full mt-4'>
-                            <button 
+                            <button
                                 type='submit'
                                 className='bg-[#c2d8c4] text-[#0f1f1f] font-semibold px-6 py-2 rounded-md hover:bg-[#a8c4a9] transition disabled:opacity-50'
                                 disabled={loading}
                             >
                                 {loading ? "Signing In..." : "Sign In"}
                             </button>
-                            <button 
+                            <button
                                 type='button'
                                 className='bg-transparent text-xs text-gray-400 hover:underline transition-colors'
                                 disabled={loading}
@@ -143,7 +142,7 @@ function Signin({ onClose, onLoginSuccess }) { // ✅ 'LoginSuccess' se 'onLogin
                         </div>
                     </div>
                 </form>
-                
+
                 <div className="text-center text-xs text-gray-500 mt-6">
                     © 2025 Hope Drip. All rights reserved.
                 </div>
