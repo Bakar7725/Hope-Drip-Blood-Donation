@@ -1,149 +1,163 @@
-import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
-
-// Contact Info Card Component
-const InfoCard = ({ Icon, title, content, detail, color }) => (
-    // Card background changed to a slightly darker gray: bg-gray-800
-    <div className="flex flex-col items-start p-6 bg-gray-800 rounded-xl shadow-lg border-t-4 border-gray-700 hover:border-cyan-500 transition duration-300 transform hover:scale-[1.02]">
-        <div className={`p-3 rounded-full mb-4 text-white ${color}`}>
-            <Icon size={24} />
-        </div>
-        <h3 className="text-xl font-bold text-white mb-1">{title}</h3>
-        <p className="text-gray-300">{content}</p>
-        <p className="text-sm text-cyan-400 mt-2 font-semibold">{detail}</p>
-    </div>
-);
+import React from "react";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Facebook,
+  Twitter,
+  Linkedin,
+  Droplet,
+} from "lucide-react";
 
 const ContactSection = () => {
-    // Simple state management for the form (non-functional submission)
-    const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // In a real application, you would send this data to an API endpoint.
-        // For this example, we'll just log it.
-        console.log('Form Submitted:', formData);
-        alert('Thank you for your message! We will be in touch shortly.');
-        setFormData({ name: '', email: '', message: '' }); // Clear form
-    };
-
-    // Main background changed to deep gray: bg-gray-900
-    return (
-        <div className="bg-gray-900 py-16 sm:py-24">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                
-                {/* Header */}
-                <div className="text-center mb-16">
-                    <p className="text-cyan-400 font-semibold uppercase tracking-wider">Get In Touch</p>
-                    <h2 className="mt-2 text-5xl font-extrabold text-white">
-                        Contact Our Support Team
-                    </h2>
-                    <p className="mt-4 text-xl text-gray-400 max-w-3xl mx-auto">
-                        We're here to help! Send us a message or reach out using the contact information below.
-                    </p>
-                </div>
-
-                {/* Content Grid: Info Cards and Form */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                    
-                    {/* 1. Contact Info Cards (Left Column - Spanning 1/3) */}
-                    <div className="space-y-6 lg:col-span-1">
-                        <InfoCard 
-                            Icon={Mail} 
-                            title="Email Us" 
-                            content="Our dedicated support team is available 24/7." 
-                            detail="support@techsolution.com"
-                            color="bg-cyan-600"
-                        />
-                        <InfoCard 
-                            Icon={Phone} 
-                            title="Call Us" 
-                            content="For urgent inquiries, please contact us directly." 
-                            detail="+1 (555) 123-4567"
-                            color="bg-blue-600"
-                        />
-                        <InfoCard 
-                            Icon={MapPin} 
-                            title="Office Location" 
-                            content="Visit our global headquarters in Silicon Valley." 
-                            detail="100 Tech Drive, San Jose, CA 95110"
-                            color="bg-indigo-600"
-                        />
-                    </div>
-
-                    {/* 2. Contact Form (Right Column - Spanning 2/3) */}
-                    {/* Form background changed to dark gray: bg-gray-800 */}
-                    <div className="lg:col-span-2 p-8 bg-gray-800 rounded-2xl shadow-2xl border border-gray-700">
-                        <h3 className="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-3">Send a Message</h3>
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            
-                            {/* Name Input */}
-                            <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    id="name"
-                                    required
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    // Input styling for dark theme
-                                    className="block w-full rounded-lg border-gray-700 bg-gray-700 text-white placeholder-gray-400 focus:ring-cyan-500 focus:border-cyan-500 p-3 shadow-inner"
-                                    placeholder="Jane Doe"
-                                />
-                            </div>
-
-                            {/* Email Input */}
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    id="email"
-                                    required
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    // Input styling for dark theme
-                                    className="block w-full rounded-lg border-gray-700 bg-gray-700 text-white placeholder-gray-400 focus:ring-cyan-500 focus:border-cyan-500 p-3 shadow-inner"
-                                    placeholder="you@company.com"
-                                />
-                            </div>
-
-                            {/* Message Textarea */}
-                            <div>
-                                <label htmlFor="message" className="block text-sm font-medium text-gray-300 mb-2">Your Message</label>
-                                <textarea
-                                    name="message"
-                                    id="message"
-                                    rows="5"
-                                    required
-                                    value={formData.message}
-                                    onChange={handleChange}
-                                    // Textarea styling for dark theme
-                                    className="block w-full rounded-lg border-gray-700 bg-gray-700 text-white placeholder-gray-400 focus:ring-cyan-500 focus:border-cyan-500 p-3 shadow-inner resize-none"
-                                    placeholder="How can we assist you today?"
-                                />
-                            </div>
-
-                            {/* Submit Button */}
-                            <button
-                                type="submit"
-                                className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-lg font-semibold rounded-lg text-white bg-cyan-600 hover:bg-cyan-700 shadow-xl transition duration-300 transform hover:scale-[1.005]"
-                            >
-                                <Send className="w-5 h-5 mr-3" />
-                                Send Inquiry
-                            </button>
-                        </form>
-                    </div>
-
-                </div>
-            </div>
+  return (
+    <section id="contact" className="py-20 sm:py-24 bg-[#282A36]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* SECTION HEADING */}
+        <div className="text-center mb-16">
+          <p className="mt-2 text-4xl font-extrabold tracking-tight text-gray-100 sm:text-5xl">
+            Connect with Hope Drip
+          </p>
+          <p className="mt-4 text-xl max-w-3xl mx-auto text-gray-300">
+            Have questions about donating, requesting blood, or partnerships?
+            We're here to help.
+          </p>
         </div>
-    );
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+
+          {/* LEFT COLUMN */}
+          <div className="space-y-10 lg:col-span-1">
+
+            {/* CONTACT INFO */}
+            <div className="p-8 rounded-xl bg-[#1A1F2E] border border-gray-700">
+              <h3 className="text-2xl font-bold mb-6 text-red-500">
+                Direct Contact
+              </h3>
+
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <Mail className="w-6 h-6 text-teal-400" />
+                  <span className="text-gray-300">
+                    info@hopedrip.org
+                  </span>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <Phone className="w-6 h-6 text-teal-400" />
+                  <span className="text-gray-300">
+                    (555) 123-4567
+                  </span>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <MapPin className="w-6 h-6 text-teal-400 mt-1" />
+                  <span className="text-gray-300">
+                    100 Donor St, Life City, 90210
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* SOCIAL LINKS */}
+            <div className="p-8 rounded-xl bg-[#1A1F2E] border border-gray-700">
+              <h3 className="text-2xl font-bold mb-6 text-red-500">
+                Follow Our Journey
+              </h3>
+
+              <div className="flex space-x-6">
+                <a className="text-gray-400 hover:text-red-500 transition">
+                  <Facebook size={28} />
+                </a>
+                <a className="text-gray-400 hover:text-red-500 transition">
+                  <Twitter size={28} />
+                </a>
+                <a className="text-gray-400 hover:text-red-500 transition">
+                  <Linkedin size={28} />
+                </a>
+              </div>
+            </div>
+
+          </div>
+
+          {/* RIGHT COLUMN - FORM */}
+          <div className="lg:col-span-2">
+            <div className="p-10 rounded-xl bg-[#1A1F2E] border-t-4 border-red-600 shadow-2xl">
+              <h3 className="text-3xl font-bold mb-8 text-gray-100">
+                Send a Message
+              </h3>
+
+              <form className="space-y-6">
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* NAME */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      className="mt-1 w-full rounded-md bg-[#1F2333] text-gray-100 border border-gray-600 placeholder-gray-400 py-3 px-4 outline-none transition-all duration-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/30 hover:border-gray-500"
+                    />
+                  </div>
+
+                  {/* EMAIL */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      className="mt-1 w-full rounded-md bg-[#1F2333] text-gray-100 border border-gray-600 placeholder-gray-400 py-3 px-4 outline-none transition-all duration-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/30 hover:border-gray-500"
+                    />
+                  </div>
+                </div>
+
+                {/* SUBJECT */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300">
+                    Subject
+                  </label>
+                  <select className="mt-1 w-full rounded-md bg-[#1F2333] text-gray-100 border border-gray-600 py-3 px-4 outline-none transition-all duration-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/30 hover:border-gray-500">
+                    <option>Donation Inquiry</option>
+                    <option>Blood Request</option>
+                    <option>Partnership</option>
+                    <option>General Question</option>
+                  </select>
+                </div>
+
+                {/* MESSAGE */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300">
+                    How can we help?
+                  </label>
+                  <textarea
+                    rows="4"
+                    required
+                    className="mt-1 w-full rounded-md bg-[#1F2333] text-gray-100 border border-gray-600 py-3 px-4 outline-none transition-all duration-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/30 hover:border-gray-500"
+                  ></textarea>
+                </div>
+
+                {/* BUTTON */}
+                <button
+                  type="submit"
+                  className="w-full flex items-center justify-center px-6 py-3 text-base font-semibold rounded-md text-white bg-red-600 hover:bg-red-700 shadow-lg transition duration-300 transform hover:scale-[1.02]"
+                >
+                  <Droplet className="w-5 h-5 mr-2" />
+                  Send Your Message
+                </button>
+
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
 };
 
 export default ContactSection;

@@ -16,8 +16,8 @@ const FeatureCard = ({ Icon, title, description, color }) => (
 const AfterScrollContent = () => {
   return (
     // ADJUSTMENT: Changed background to dark blue (#1f2937) and text colors to white/light gray
-    <div className="bg-[#1f2937] min-h-screen py-16 sm:py-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-[#0F1326] min-h-screen py-16 sm:py-24 ">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-col items-center justify-center">
         
         {/* Section Heading */}
         <div className="text-center mb-12">
@@ -25,8 +25,7 @@ const AfterScrollContent = () => {
           <h2 className="mt-2 text-4xl font-extrabold text-white sm:text-5xl"> 
             Why Every Drop Counts
           </h2>
-          <p className="mt-4 text-xl text-gray-300 max-w-3xl mx-auto"> // Adjusted text color
-            We connect compassionate donors with patients in urgent need, ensuring a sustainable supply of life-saving blood components.
+          <p className="mt-4 text-xl text-gray-300 max-w-3xl mx-auto"> 
           </p>
         </div>
 
@@ -49,8 +48,7 @@ const AfterScrollContent = () => {
             >
                 Start Your Donor Journey
             </a>
-            <p className="mt-4 text-sm text-gray-400"> // Adjusted text color
-                It only takes 30 minutes to make a lifetime difference.
+            <p className="mt-4 text-sm text-gray-400"> 
             </p>
         </div>
 
