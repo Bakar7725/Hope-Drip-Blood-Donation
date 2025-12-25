@@ -2,14 +2,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 
-const OTPVerification = ({ 
+const OTPVerification = ({
   email,
-  phoneNumber, 
+  phoneNumber,
   userData,
-  onVerify, 
-  onResend, 
+  onVerify,
+  onResend,
   onClose,
-  isOpen 
+  isOpen
 }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -69,14 +69,14 @@ const OTPVerification = ({
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text');
     const pastedOtp = pastedData.slice(0, 6).split('');
-    
+
     if (pastedOtp.every(char => /^\d*$/.test(char))) {
       const newOtp = [...otp];
       pastedOtp.forEach((char, index) => {
         if (index < 6) newOtp[index] = char;
       });
       setOtp(newOtp);
-      
+
       // Focus last input after paste
       const lastFilledIndex = Math.min(pastedOtp.length - 1, 5);
       if (inputRefs.current[lastFilledIndex]) {
@@ -87,7 +87,7 @@ const OTPVerification = ({
 
   const handleVerify = async () => {
     const enteredOtp = otp.join('');
-    
+
     if (enteredOtp.length !== 6) {
       setError('Please enter complete 6-digit OTP');
       return;
@@ -97,18 +97,20 @@ const OTPVerification = ({
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:5000/verify-otp-register', {
+      // CHANGE THIS: Use the same backend port (8789)
+      const response = await axios.post('http://localhost:8789/verify-otp-register', {
         email: email,
         otp: enteredOtp,
         userData: userData
       });
-      
+
       if (response.data.success) {
         onVerify(response.data.user);
       } else {
         setError(response.data.message || 'Invalid OTP. Please try again.');
       }
     } catch (error) {
+      console.error('OTP Verification Error:', error);
       setError(error.response?.data?.message || 'Verification failed. Please try again.');
     } finally {
       setLoading(false);
@@ -122,6 +124,7 @@ const OTPVerification = ({
     setError('');
 
     try {
+      // Call the parent resend function
       await onResend(email);
       startTimer();
       setOtp(['', '', '', '', '', '']);
@@ -151,7 +154,7 @@ const OTPVerification = ({
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">Verify Email</h2>
-          <button 
+          <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-2xl font-light w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
             disabled={loading}
