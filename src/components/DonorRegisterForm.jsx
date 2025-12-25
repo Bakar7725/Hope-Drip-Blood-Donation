@@ -3,7 +3,7 @@ import { RxCross2 } from "react-icons/rx";
 import { FiRefreshCw } from "react-icons/fi";
 import axios from "axios";
 
-export default function DonorRegistrationForm({ onClose }) {
+export default function DonorRegistrationForm({ onClose, onSuccess }) { // Added onSuccess prop
     const [formData, setFormData] = useState({
         fullName: "",
         phone: "",
@@ -181,22 +181,37 @@ export default function DonorRegistrationForm({ onClose }) {
         setSuccess("");
 
         try {
-            const response = await axios.post("http://localhost:8789/register-donor", {
-                userId: userId,
-                fullName: formData.fullName,
-                phone: formData.phone,
-                bloodGroup: formData.bloodGroup,
-                age: formData.age,
-                gender: formData.gender,
-                province: formData.province,
-                city: formData.city,
-                address: formData.address
-            }, {
-                timeout: 15000
-            });
+            console.log("📤 Submitting donor registration for user ID:", userId);
+            console.log("📋 Form data:", formData);
+
+            const response = await axios.post(
+                "http://localhost:8789/register-donor",
+                {
+                    userId: userId,
+                    fullName: formData.fullName,
+                    phone: formData.phone,
+                    bloodGroup: formData.bloodGroup,
+                    age: formData.age,
+                    gender: formData.gender,
+                    province: formData.province,
+                    city: formData.city,
+                    address: formData.address
+                },
+                {
+                    timeout: 15000,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            console.log("✅ Backend response:", response.data);
 
             if (response.data.success) {
                 setSuccess("✅ Successfully registered as a blood donor!");
+
+                // Clear any previous errors
+                setError("");
 
                 // ✅ Update user data in localStorage with donor verification status
                 const userData = localStorage.getItem('user');
@@ -211,33 +226,53 @@ export default function DonorRegistrationForm({ onClose }) {
                     localStorage.setItem('user', JSON.stringify(updatedUser));
                     console.log("💾 Updated donor in localStorage:", updatedUser);
 
-                    // ✅ IMPORTANT: Call onSuccess callback if provided
+                    // ✅ Call onSuccess callback if provided
                     if (onSuccess && typeof onSuccess === 'function') {
+                        console.log("📞 Calling onSuccess callback");
                         onSuccess(updatedUser); // Pass updated user data back
                     }
                 }
 
                 // Close modal after 3 seconds
                 setTimeout(() => {
+                    console.log("🔄 Closing modal after successful registration");
                     onClose();
                 }, 3000);
             } else {
+                // If success is false, show the backend error message
                 setError("❌ " + (response.data.message || "Failed to register as donor"));
+                setSuccess(""); // Clear success message
             }
         } catch (err) {
-            console.error("❌ Submit error:", err);
-            if (err.response?.data?.message) {
-                setError("❌ " + err.response.data.message);
-            } else if (err.code === 'ECONNREFUSED') {
-                setError("❌ Cannot connect to server. Please try again later.");
+            console.error("❌ Submit error details:", err);
+
+            // Clear success message on error
+            setSuccess("");
+
+            if (err.response) {
+                // Server responded with error status
+                console.error("📊 Server response:", err.response.data);
+                console.error("📊 Server status:", err.response.status);
+
+                const errorMessage = err.response.data?.message ||
+                    err.response.data?.error ||
+                    "Registration failed";
+                setError("❌ " + errorMessage);
+            } else if (err.request) {
+                // No response received
+                console.error("📡 No response from server");
+                setError("❌ Cannot connect to server. Please check your connection.");
+            } else if (err.code === 'ECONNABORTED') {
+                // Request timeout
+                setError("❌ Request timeout. Please try again.");
             } else {
-                setError("❌ Failed to register as donor. Please try again.");
+                // Other errors
+                setError("❌ An unexpected error occurred. Please try again.");
             }
         } finally {
             setLoading(false);
         }
     };
-
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md">
@@ -263,14 +298,15 @@ export default function DonorRegistrationForm({ onClose }) {
                     Join our life-saving community. Your donation can save lives!
                 </p>
 
-                {/* Success/Error Messages */}
+                {/* Success Message - Only show when success exists */}
                 {success && (
                     <div className="mb-4 p-3 bg-green-700/30 text-green-300 rounded-md text-center">
                         {success}
                     </div>
                 )}
 
-                {error && (
+                {/* Error Message - Only show when error exists AND success does NOT exist */}
+                {error && !success && (
                     <div className="mb-4 p-3 bg-red-700/30 text-red-300 rounded-md text-center">
                         {error}
                         {error.includes("server") && (
@@ -443,11 +479,13 @@ export default function DonorRegistrationForm({ onClose }) {
                 </button>
 
                 {/* Debug Info */}
-                <div className="text-center text-xs text-gray-500 mt-4 space-y-1">
-                    {userId && <p>User ID: {userId}</p>}
-                    <p>Status will be automatically set to: <span className="text-green-400">Free</span></p>
-                    <p>Donor flag will be set to: <span className="text-green-400">1 (Active)</span></p>
-                </div>
+                {process.env.NODE_ENV === 'development' && (
+                    <div className="text-center text-xs text-gray-500 mt-4 space-y-1">
+                        {userId && <p>User ID: {userId}</p>}
+                        <p>Status will be automatically set to: <span className="text-green-400">Free</span></p>
+                        <p>Donor flag will be set to: <span className="text-green-400">1 (Active)</span></p>
+                    </div>
+                )}
             </form>
         </div>
     );

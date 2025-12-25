@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Content from './components/content_1';
-import Content1_2 from './components/content_1.2'; // Renamed for clarity
+import Content1_2 from './components/content_1.2';
 import Content4 from './components/Donors.jsx';
 import Patient from './components/Patients';
 import PatientRegistration from './components/PatientRegistration';
@@ -10,6 +10,8 @@ import About from './components/About';
 import Footer from './components/Footer.jsx';
 import AuthWrapper from './components/AuthWrapper';
 import PersonalInfoModal from './components/DonorRegisterForm.jsx';
+import NoofBlood from './components/NoofBlood.jsx';
+import PatientNotifications from "./components/PatientNotifications"; // ✅ ADD THIS LINE
 
 function App() {
   const [showSignin, setShowSignin] = useState(false);
@@ -21,6 +23,7 @@ function App() {
   const [showPersonalInfo, setShowPersonalInfo] = useState(false);
   const [user, setUser] = useState(null);
   const [authMessage, setAuthMessage] = useState("");
+  const [showDonorList, setShowDonorList] = useState(false);
 
   // Load user from localStorage on mount
   useEffect(() => {
@@ -42,6 +45,23 @@ function App() {
       }
     }
   }, []);
+
+  const handleShowDonorList = () => {
+    console.log("📋 Showing donor list...");
+    setShowDonorList(true);
+    setShowDonors(true);
+    setShowSignin(false);
+    setShowPersonalInfo(false);
+    setShowPatientRegistration(false);
+  };
+
+  const handleShowDonorForm = () => {
+    console.log("📝 Showing donor registration form...");
+    setShowPersonalInfo(true);
+    setShowDonors(false);
+    setShowSignin(false);
+    setShowPatientRegistration(false);
+  };
 
   const onLoginSuccess = (userData) => {
     // Ensure user object has all required fields
@@ -72,9 +92,18 @@ function App() {
     setShowPersonalInfo(false);
   };
 
-  // Handle Donor Click
+  // Handle Donor Click - FIXED VERSION
+  // Handle Donor Click - UPDATED VERSION for Patients
   const handleDonorsClick = () => {
+    console.log("🩸 Donors clicked, user status:", {
+      isLoggedIn,
+      donor: user?.donor,
+      patient: user?.patient,
+      verification: user?.verification
+    });
+
     setAuthMessage("");
+    closeAllPages();
 
     if (!isLoggedIn) {
       setAuthMessage("Please sign in to view donors");
@@ -82,26 +111,34 @@ function App() {
       return;
     }
 
-    if (user && user.verification === 1 && user.donor === 1) {
-      setShowDonors(true);
-      setShowPatients(false);
-      setShowPatientRegistration(false);
-      setShowPersonalInfo(false);
-    } else if (user && (user.verification === 0 || user.donor === 0)) {
-      setAuthMessage("Please complete your donor profile to view donors");
-      setShowPersonalInfo(true);
-      setShowDonors(false);
-      setShowPatientRegistration(false);
-    } else {
-      setAuthMessage("Please complete your donor profile first");
-      setShowPersonalInfo(true);
-      setShowPatientRegistration(false);
-    }
-  };
+    // ✅ NEW LOGIC: If user is patient OR verified donor, show donor list
+    if (user) {
+      // Check if user is patient
+      if (user.patient === 1) {
+        console.log("✅ User is patient, showing donor list");
+        setShowDonors(true);
+        setShowDonorList(true);
+        return;
+      }
 
+      // Check if user is a verified donor
+      if (user.donor === 1 && user.verification === 1) {
+        console.log("✅ User is verified donor, showing donor list");
+        setShowDonors(true);
+        setShowDonorList(true);
+        return;
+      }
+    }
+
+    // If user is logged in but not patient or verified donor, show donor registration
+    console.log("⚠️ User needs to register as donor first");
+    setAuthMessage("Please complete your donor profile to access donor features");
+    setShowPersonalInfo(true);
+  };
   // Handle Patient Requests Page
   const handlePatientsClick = () => {
     setAuthMessage("");
+    closeAllPages();
 
     if (!isLoggedIn) {
       setAuthMessage("Please sign in to view patient requests");
@@ -113,16 +150,10 @@ function App() {
     if (user && user.patient === 1) {
       // User is already registered as patient, show patient requests
       setShowPatients(true);
-      setShowDonors(false);
-      setShowPatientRegistration(false);
-      setShowPersonalInfo(false);
     } else if (user && user.patient === 0) {
       // User is not registered as patient, show patient registration
       setAuthMessage("Please register as a patient first");
       setShowPatientRegistration(true);
-      setShowPatients(false);
-      setShowDonors(false);
-      setShowPersonalInfo(false);
     } else {
       // User data doesn't have patient field
       setShowPatientRegistration(true);
@@ -187,6 +218,7 @@ function App() {
     setAuthMessage("✅ Donor profile completed! You can now view donors.");
     setShowPersonalInfo(false);
     setShowDonors(true);
+    setShowDonorList(true);
 
     setTimeout(() => {
       setAuthMessage("");
@@ -198,6 +230,7 @@ function App() {
     setShowPatients(false);
     setShowPatientRegistration(false);
     setShowPersonalInfo(false);
+    setShowDonorList(false);
     setAuthMessage("");
   };
 
@@ -217,14 +250,15 @@ function App() {
         isLoggedIn={isLoggedIn}
         onLogout={handleLogout}
         closeOverlays={closeAllPages}
+        showDonorList={handleShowDonorList}
       />
 
       {/* Authentication Messages */}
       {authMessage && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50">
           <div className={`px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 ${authMessage.includes("✅")
-              ? "bg-green-600/90 text-white"
-              : "bg-yellow-600/90 text-white"
+            ? "bg-green-600/90 text-white"
+            : "bg-yellow-600/90 text-white"
             }`}>
             <span>{authMessage}</span>
             <button
@@ -286,7 +320,7 @@ function App() {
               onPatientRegistrationShow={handlePatientRegistrationShow}
             />
           </div>
-
+          <div><NoofBlood /></div>
           <div id="about"><About /></div>
           <div id="contact"><Contact /></div>
           <Footer />

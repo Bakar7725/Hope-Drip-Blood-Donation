@@ -12,16 +12,131 @@ function Content1_2({
 }) {
     const [isVerifiedDonor, setIsVerifiedDonor] = React.useState(false);
     const [isVerifiedPatient, setIsVerifiedPatient] = React.useState(false);
+    const [loading, setLoading] = React.useState(false);
+
+    // Function to check patient status from API
+    const checkPatientStatus = React.useCallback(async () => {
+        if (user && user.id) {
+            try {
+                setLoading(true);
+                const response = await fetch(`http://localhost:8789/check-patient/${user.id}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log("🩺 Patient status from API:", {
+                        isPatient: data.isPatient,
+                        patient: data.patient,
+                        patient_status: data.patient_status
+                    });
+
+                    setIsVerifiedPatient(data.isPatient);
+
+                    // If API says user is patient but local storage doesn't, update localStorage
+                    if (data.isPatient && user.patient !== 1) {
+                        console.log("🔄 Updating localStorage with patient status...");
+                        const updatedUser = {
+                            ...user,
+                            patient: data.patient || 1,
+                            patient_status: data.patient_status || 'active'
+                        };
+                        localStorage.setItem('user', JSON.stringify(updatedUser));
+
+                        // Trigger a reload of user data in parent component
+                        window.dispatchEvent(new Event('storage'));
+                    }
+                }
+            } catch (error) {
+                console.error("❌ Error checking patient status:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+    }, [user]);
 
     React.useEffect(() => {
+        console.log("🔍 Current user object in Content1_2:", user);
+
         if (user) {
-            setIsVerifiedDonor(user.verification === 1 && user.donor === 1);
-            setIsVerifiedPatient(user.patient === 1);
+            // Check donor status - verified if verification=1 AND donor=1
+            const donorVerified = user.verification === 1 && user.donor === 1;
+            setIsVerifiedDonor(donorVerified);
+
+            // Check patient status - UPDATED LOGIC
+            console.log("🩺 Patient check results:", {
+                id: user.id,
+                donor: user.donor,
+                patient: user.patient,
+                patient_status: user.patient_status,
+                verification: user.verification,
+                medical_condition: user.medical_condition,
+                emergency_contact: user.emergency_contact,
+                hospital_name: user.hospital_name
+            });
+
+            // Check if user has ANY patient-related data
+            const hasPatientData =
+                user.patient === 1 ||
+                user.patient_status === 'active' ||
+                user.patient_status === 'pending' ||
+                user.medical_condition ||
+                user.emergency_contact ||
+                user.hospital_name;
+
+            console.log("📊 Patient check summary:", {
+                patientField: user.patient,
+                patientStatusField: user.patient_status,
+                hasPatientFields: user.medical_condition || user.emergency_contact,
+                hasPatientData: hasPatientData
+            });
+
+            if (hasPatientData) {
+                setIsVerifiedPatient(true);
+                console.log("✅ Patient detected from user data");
+            } else {
+                // Check with API if no patient data locally
+                console.log("🔍 No patient data locally, checking API...");
+                checkPatientStatus();
+            }
         } else {
             setIsVerifiedDonor(false);
             setIsVerifiedPatient(false);
         }
-    }, [user]);
+    }, [user, checkPatientStatus]);
+
+    // Listen for localStorage updates
+    React.useEffect(() => {
+        const handleStorageChange = () => {
+            console.log("📦 localStorage changed, reloading user data...");
+            const userData = localStorage.getItem('user');
+            if (userData) {
+                try {
+                    const updatedUser = JSON.parse(userData);
+                    console.log("🔄 Updated user from localStorage:", {
+                        patient: updatedUser.patient,
+                        patient_status: updatedUser.patient_status
+                    });
+
+                    // Update local state
+                    const donorVerified = updatedUser.verification === 1 && updatedUser.donor === 1;
+                    setIsVerifiedDonor(donorVerified);
+
+                    const hasPatientData =
+                        updatedUser.patient === 1 ||
+                        updatedUser.patient_status === 'active' ||
+                        updatedUser.patient_status === 'pending' ||
+                        updatedUser.medical_condition ||
+                        updatedUser.emergency_contact;
+
+                    setIsVerifiedPatient(hasPatientData);
+                } catch (err) {
+                    console.error("Error parsing updated user:", err);
+                }
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
 
     const handleDonorClick = (e) => {
         e.preventDefault();
@@ -41,6 +156,8 @@ function Content1_2({
     const handlePatientClick = (e) => {
         e.preventDefault();
 
+        console.log("🩺 Patient button clicked, isVerifiedPatient:", isVerifiedPatient);
+
         if (isVerifiedPatient) {
             alert("✅ You are already a registered patient!");
             return;
@@ -54,6 +171,11 @@ function Content1_2({
         } else {
             A(); // Sign in
         }
+    };
+
+    const handleRefreshPatientStatus = () => {
+        console.log("🔄 Manually refreshing patient status...");
+        checkPatientStatus();
     };
 
     return (
@@ -189,6 +311,34 @@ function Content1_2({
                         <p className="mt-2 text-sm text-green-400 text-center">
                             ✅ Registered patient
                         </p>
+                    )}
+
+                    {/* Refresh button for debugging */}
+                    {user && (
+                        <button
+                            onClick={handleRefreshPatientStatus}
+                            className="mt-2 text-xs text-gray-400 hover:text-white underline"
+                        >
+                            🔄 Refresh Patient Status
+                        </button>
+                    )}
+
+                    {/* Debug info - remove in production */}
+                    {user && (
+                        <div className="mt-4 p-2 bg-gray-900/50 rounded text-xs text-gray-400">
+                            <p>Debug Info:</p>
+                            <p>User ID: {user.id}</p>
+                            <p>Donor: {user.donor}</p>
+                            <p>Patient: {user.patient}</p>
+                            <p>Patient Status: {user.patient_status || 'null'}</p>
+                            <p>Verification: {user.verification}</p>
+                            <p>Medical Condition: {user.medical_condition || 'null'}</p>
+                            <p>Emergency Contact: {user.emergency_contact || 'null'}</p>
+                            <p>Hospital: {user.hospital_name || 'null'}</p>
+                            <p>Is Verified Donor: {isVerifiedDonor ? 'Yes' : 'No'}</p>
+                            <p>Is Verified Patient: {isVerifiedPatient ? 'Yes' : 'No'}</p>
+                            <p>Loading: {loading ? 'Yes' : 'No'}</p>
+                        </div>
                     )}
                 </div>
             </div>
