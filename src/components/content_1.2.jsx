@@ -263,6 +263,7 @@ function Content1_2({
 
     const handleDonorClick = (e) => {
         e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
 
         if (isVerifiedDonor) {
             alert("✅ You are already a registered and verified donor!");
@@ -288,6 +289,8 @@ function Content1_2({
     const handlePatientClick = (e) => {
         e.preventDefault();
 
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
         console.log("🩺 Patient button clicked!");
         console.log("isVerifiedPatient:", isVerifiedPatient);
         console.log("isVerifiedDonor:", isVerifiedDonor);
@@ -310,7 +313,7 @@ function Content1_2({
                 // Call parent function to show patient registration
                 if (typeof onPatientRegistrationShow === 'function') {
                     console.log("📞 Calling onPatientRegistrationShow function now...");
-                    onPatientRegistrationShow();
+                    C();
                 } else {
                     console.error("❌ onPatientRegistrationShow function is not defined!");
                     alert("Patient registration function is not available. Please refresh the page or contact support.");

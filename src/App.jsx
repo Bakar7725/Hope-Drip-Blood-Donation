@@ -506,9 +506,8 @@ function App() {
                 console.log("QQQQQQQQQQQQQQQQQ");
               }}
               C={() => {
-                setAuthMessage("");
-                setshowPatientRegistration(true);
-                console.log("WWWWWWWWWWWWWWWW");
+                handleOpenPatientRegistrationFromPopup()
+                console.log("Popup");
               }}
 
               user={user}
