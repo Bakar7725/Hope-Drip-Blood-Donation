@@ -1,13 +1,25 @@
 import { useState, useEffect } from "react";
-import { RxCross2 } from "react-icons/rx";
-import { FiRefreshCw } from "react-icons/fi";
+import {
+    User,
+    Phone,
+    Calendar,
+    FileText,
+    AlertCircle,
+    HeartPulse,
+    ShieldCheck,
+    Home,
+    Droplet,
+    Map,
+    Building,
+    Contact
+} from "lucide-react";
 import axios from "axios";
 
-export default function DonorRegistrationForm({ onClose, onSuccess }) { // Added onSuccess prop
+export default function DonorRegistrationForm({ onClose, onSuccess }) {
     const [formData, setFormData] = useState({
-        fullName: "",
+        name: "",
         phone: "",
-        bloodGroup: "",
+        blood_group: "",
         age: "",
         gender: "",
         province: "",
@@ -18,11 +30,15 @@ export default function DonorRegistrationForm({ onClose, onSuccess }) { // Added
     const [provinces, setProvinces] = useState([]);
     const [cities, setCities] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [fetchingCities, setFetchingCities] = useState(false);
+    const [loadingCities, setLoadingCities] = useState(false);
     const [fetchingProvinces, setFetchingProvinces] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [userId, setUserId] = useState(null);
+    const [errors, setErrors] = useState({});
+
+    const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    const genders = ['Male', 'Female', 'Other'];
 
     // Get user ID from localStorage on component mount
     useEffect(() => {
@@ -36,7 +52,7 @@ export default function DonorRegistrationForm({ onClose, onSuccess }) { // Added
                 // Pre-fill name and phone if available
                 setFormData(prev => ({
                     ...prev,
-                    fullName: user.name || "",
+                    name: user.name || "",
                     phone: user.phone || ""
                 }));
             } catch (err) {
@@ -60,6 +76,7 @@ export default function DonorRegistrationForm({ onClose, onSuccess }) { // Added
             fetchCities(formData.province);
         } else {
             setCities([]);
+            setFormData(prev => ({ ...prev, city: '' }));
         }
     }, [formData.province]);
 
@@ -102,7 +119,7 @@ export default function DonorRegistrationForm({ onClose, onSuccess }) { // Added
     const fetchCities = async (province) => {
         if (!province) return;
 
-        setFetchingCities(true);
+        setLoadingCities(true);
         try {
             const response = await axios.get(`http://localhost:8789/cities/${province}`, {
                 timeout: 10000
@@ -127,7 +144,7 @@ export default function DonorRegistrationForm({ onClose, onSuccess }) { // Added
                 setError(`⚠️ No cities found for ${province}. Please select another province.`);
             }
         } finally {
-            setFetchingCities(false);
+            setLoadingCities(false);
         }
     };
 
@@ -147,32 +164,59 @@ export default function DonorRegistrationForm({ onClose, onSuccess }) { // Added
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+
+        // Clear error for this field
+        if (errors[name]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
+
         setError("");
         setSuccess("");
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+
+        if (!formData.name.trim()) newErrors.name = 'Full name is required';
+        if (!formData.phone) newErrors.phone = 'Phone number is required';
+        if (!formData.blood_group) newErrors.blood_group = 'Blood type is required';
+        if (!formData.age) newErrors.age = 'Age is required';
+        if (!formData.gender) newErrors.gender = 'Gender is required';
+        if (!formData.province) newErrors.province = 'Province is required';
+        if (!formData.city) newErrors.city = 'City is required';
+
+        // Age validation
+        const ageNum = parseInt(formData.age);
+        if (ageNum < 18 || ageNum > 65) {
+            newErrors.age = 'Age must be between 18 and 65 years to donate blood.';
+        }
+
+        // Phone validation
+        if (formData.phone && !/^03\d{9}$/.test(formData.phone)) {
+            newErrors.phone = 'Phone must be 11 digits starting with 03';
+        }
+
+        return newErrors;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        const formErrors = validateForm();
+        if (Object.keys(formErrors).length > 0) {
+            setErrors(formErrors);
+            return;
+        }
+
         if (!userId) {
             setError("❌ User not logged in. Please sign in again.");
-            return;
-        }
-
-        // Validation
-        const requiredFields = ['fullName', 'phone', 'bloodGroup', 'age', 'gender', 'province', 'city'];
-        const missingFields = requiredFields.filter(field => !formData[field]);
-
-        if (missingFields.length > 0) {
-            setError(`❌ Please fill all required fields: ${missingFields.join(', ')}`);
-            return;
-        }
-
-        // Age validation
-        const ageNum = parseInt(formData.age);
-        if (ageNum < 18 || ageNum > 65) {
-            setError("❌ Age must be between 18 and 65 years to donate blood.");
             return;
         }
 
@@ -188,9 +232,9 @@ export default function DonorRegistrationForm({ onClose, onSuccess }) { // Added
                 "http://localhost:8789/register-donor",
                 {
                     userId: userId,
-                    fullName: formData.fullName,
+                    fullName: formData.name,
                     phone: formData.phone,
-                    bloodGroup: formData.bloodGroup,
+                    bloodGroup: formData.blood_group,
                     age: formData.age,
                     gender: formData.gender,
                     province: formData.province,
@@ -221,7 +265,8 @@ export default function DonorRegistrationForm({ onClose, onSuccess }) { // Added
                         ...user,
                         ...response.data.donor,
                         verification: 1, // Ensure verification is set to 1
-                        donor: 1 // Ensure donor flag is set to 1
+                        donor: 1, // Ensure donor flag is set to 1
+                        status: 'free' // Default status for donor
                     };
                     localStorage.setItem('user', JSON.stringify(updatedUser));
                     console.log("💾 Updated donor in localStorage:", updatedUser);
@@ -275,218 +320,496 @@ export default function DonorRegistrationForm({ onClose, onSuccess }) { // Added
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md">
-            <form
-                onSubmit={handleSubmit}
-                className="w-[550px] bg-[#0e1322] text-white p-10 rounded-xl shadow-2xl relative max-h-[90vh] overflow-y-auto"
-            >
-                {/* Close Button */}
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-white hover:bg-white/10 rounded p-1 transition"
-                    disabled={loading}
-                >
-                    <RxCross2 size={20} />
-                </button>
-
-                <h2 className="text-2xl font-semibold text-center mb-6 text-red-400">
-                    🩸 Register as Blood Donor
-                </h2>
-
-                <p className="text-center text-gray-300 mb-6">
-                    Join our life-saving community. Your donation can save lives!
-                </p>
-
-                {/* Success Message - Only show when success exists */}
-                {success && (
-                    <div className="mb-4 p-3 bg-green-700/30 text-green-300 rounded-md text-center">
-                        {success}
-                    </div>
-                )}
-
-                {/* Error Message - Only show when error exists AND success does NOT exist */}
-                {error && !success && (
-                    <div className="mb-4 p-3 bg-red-700/30 text-red-300 rounded-md text-center">
-                        {error}
-                        {error.includes("server") && (
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
+            {/* Header with Back Button */}
+            <div className="bg-gradient-to-r from-red-900/80 to-rose-900/80 border-b border-red-500/30">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
                             <button
-                                type="button"
-                                onClick={fetchProvinces}
-                                className="ml-2 inline-flex items-center text-sm underline"
+                                onClick={onClose}
+                                className="flex items-center text-red-300 hover:text-white transition-colors group"
                             >
-                                <FiRefreshCw size={14} className="mr-1" />
-                                Retry
+                                <Home className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                                <span className="font-medium">Back to Home</span>
                             </button>
-                        )}
+                        </div>
+
+                        <div className="text-center">
+                            <h1 className="text-2xl md:text-3xl font-bold text-white">
+                                Donor Registration
+                            </h1>
+                            <p className="text-red-200 text-sm mt-1">
+                                Join our life-saving community as a blood donor
+                            </p>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                            <div className="bg-red-500/20 p-2 rounded-lg">
+                                <User className="w-5 h-5 text-red-400" />
+                            </div>
+                            <div>
+                                <p className="text-gray-300 text-sm">Logged in</p>
+                                <p className="text-white font-medium text-sm truncate max-w-[150px]">
+                                    {userId ? "User #" + userId : "Not logged in"}
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                )}
-
-                {/* Full Name */}
-                <div className="mb-4">
-                    <input
-                        type="text"
-                        name="fullName"
-                        placeholder="Full Name *"
-                        value={formData.fullName}
-                        onChange={handleChange}
-                        required
-                        className="w-full bg-transparent border-b border-gray-400 focus:border-red-500 outline-none py-2 placeholder-gray-400"
-                        disabled={loading}
-                    />
                 </div>
+            </div>
 
-                {/* Phone & Age */}
-                <div className="flex gap-4 mb-4">
-                    <input
-                        type="tel"
-                        name="phone"
-                        placeholder="Phone Number *"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        required
-                        className="w-full bg-transparent border-b border-gray-400 focus:border-red-500 outline-none py-2 placeholder-gray-400"
-                        disabled={loading}
-                    />
-                    <input
-                        type="number"
-                        name="age"
-                        placeholder="Age (18-65) *"
-                        value={formData.age}
-                        onChange={handleChange}
-                        required
-                        min="18"
-                        max="65"
-                        className="w-full bg-transparent border-b border-gray-400 focus:border-red-500 outline-none py-2 placeholder-gray-400"
-                        disabled={loading}
-                    />
-                </div>
+            {/* Main Content */}
+            <div className="pt-8 pb-16 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto">
+                    <div className="grid lg:grid-cols-3 gap-8">
+                        {/* Form Section */}
+                        <div className="lg:col-span-2">
+                            {/* Progress Indicator */}
+                            <div className="mb-8">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+                                            <span className="text-white font-bold">1</span>
+                                        </div>
+                                        <span className="text-white font-medium">Personal Info</span>
+                                    </div>
+                                    <div className="h-1 flex-1 mx-4 bg-gray-700"></div>
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+                                            <span className="text-gray-400 font-bold">2</span>
+                                        </div>
+                                        <span className="text-gray-400 font-medium">Location</span>
+                                    </div>
+                                    <div className="h-1 flex-1 mx-4 bg-gray-700"></div>
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+                                            <span className="text-gray-400 font-bold">3</span>
+                                        </div>
+                                        <span className="text-gray-400 font-medium">Review</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                {/* Blood Group & Gender */}
-                <div className="flex gap-4 mb-4">
-                    <select
-                        name="bloodGroup"
-                        value={formData.bloodGroup}
-                        onChange={handleChange}
-                        required
-                        className="w-full bg-transparent border-b border-gray-400 focus:border-red-500 outline-none py-2 text-gray-400"
-                        disabled={loading}
-                    >
-                        <option value="">Blood Group *</option>
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
-                    </select>
+                            {/* Success and Error Messages */}
+                            {success && (
+                                <div className="mb-6 p-4 bg-green-900/30 border border-green-700 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <ShieldCheck className="w-6 h-6 text-green-400" />
+                                        <p className="text-green-300">{success}</p>
+                                    </div>
+                                </div>
+                            )}
 
-                    <select
-                        name="gender"
-                        value={formData.gender}
-                        onChange={handleChange}
-                        required
-                        className="w-full bg-transparent border-b border-gray-400 focus:border-red-500 outline-none py-2 text-gray-400"
-                        disabled={loading}
-                    >
-                        <option value="">Gender *</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
+                            {error && !success && (
+                                <div className="mb-6 p-4 bg-red-900/30 border border-red-700 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <AlertCircle className="w-6 h-6 text-red-400" />
+                                        <p className="text-red-300">{error}</p>
+                                    </div>
+                                </div>
+                            )}
 
-                {/* Province & City */}
-                <div className="flex gap-4 mb-4">
-                    <select
-                        name="province"
-                        value={formData.province}
-                        onChange={handleChange}
-                        required
-                        className="w-full bg-transparent border-b border-gray-400 focus:border-red-500 outline-none py-2 text-gray-400"
-                        disabled={loading || fetchingProvinces}
-                    >
-                        <option value="">
-                            {fetchingProvinces ? "Loading provinces..." : "Province *"}
-                        </option>
-                        {provinces.map((province, index) => (
-                            <option key={index} value={province}>
-                                {province}
-                            </option>
-                        ))}
-                    </select>
+                            {/* Form Card */}
+                            <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-2xl shadow-2xl p-6 md:p-8">
+                                <div className="flex items-center gap-3 mb-8">
+                                    <div className="bg-red-500/20 p-2 rounded-lg">
+                                        <Droplet className="w-6 h-6 text-red-400" />
+                                    </div>
+                                    <h2 className="text-xl font-bold text-white">Donor Registration Form</h2>
+                                </div>
 
-                    <select
-                        name="city"
-                        value={formData.city}
-                        onChange={handleChange}
-                        required
-                        className="w-full bg-transparent border-b border-gray-400 focus:border-red-500 outline-none py-2 text-gray-400"
-                        disabled={loading || !formData.province || fetchingCities}
-                    >
-                        <option value="">
-                            {fetchingCities
-                                ? "Loading cities..."
-                                : formData.province
-                                    ? cities.length > 0 ? "City *" : "No cities available"
-                                    : "Select province first"
-                            }
-                        </option>
-                        {cities.map((city, index) => (
-                            <option key={index} value={city}>
-                                {city}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                                <form onSubmit={handleSubmit} className="space-y-8">
+                                    {/* Personal Information */}
+                                    <section className="bg-gray-900/50 rounded-xl p-6">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <User className="w-5 h-5 text-red-400" />
+                                            <h3 className="text-lg font-semibold text-white">
+                                                Personal Information
+                                            </h3>
+                                        </div>
 
-                {/* Address */}
-                <textarea
-                    name="address"
-                    rows="3"
-                    placeholder="Full Address (Optional)"
-                    value={formData.address}
-                    onChange={handleChange}
-                    className="w-full bg-transparent border-b border-gray-400 focus:border-red-500 outline-none py-2 mb-6 placeholder-gray-400 resize-none"
-                    disabled={loading}
-                />
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                    Full Name *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="name"
+                                                    value={formData.name}
+                                                    onChange={handleChange}
+                                                    className={`w-full px-4 py-3 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all text-white ${errors.name ? 'border-red-500' : 'border-gray-700'}`}
+                                                    placeholder="Enter your full name"
+                                                    disabled={loading}
+                                                />
+                                                {errors.name && (
+                                                    <p className="text-red-400 text-sm mt-2 flex items-center">
+                                                        <AlertCircle className="w-4 h-4 mr-1" />
+                                                        {errors.name}
+                                                    </p>
+                                                )}
+                                            </div>
 
-                {/* Terms & Conditions */}
-                <div className="mb-6 text-sm text-gray-400">
-                    <p className="mb-2">By registering as a donor, you agree to:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                        <li>Be contacted for blood donation requests</li>
-                        <li>Provide accurate health information</li>
-                        <li>Donate voluntarily without any compensation</li>
-                        <li>Update your availability status regularly</li>
-                    </ul>
-                </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                    Phone Number *
+                                                </label>
+                                                <div className="relative">
+                                                    <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                                                    <input
+                                                        type="tel"
+                                                        name="phone"
+                                                        value={formData.phone}
+                                                        onChange={handleChange}
+                                                        className={`w-full pl-12 pr-4 py-3 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all text-white ${errors.phone ? 'border-red-500' : 'border-gray-700'}`}
+                                                        placeholder="03XXXXXXXXX"
+                                                        maxLength="11"
+                                                        disabled={loading}
+                                                    />
+                                                </div>
+                                                {errors.phone && (
+                                                    <p className="text-red-400 text-sm mt-2">{errors.phone}</p>
+                                                )}
+                                            </div>
 
-                {/* Submit Button */}
-                <button
-                    type="submit"
-                    disabled={loading || fetchingProvinces}
-                    className="w-full py-3 rounded-full bg-red-600 text-white hover:bg-red-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-semibold"
-                >
-                    {loading ? (
-                        <>
-                            <FiRefreshCw className="animate-spin mr-2" size={18} />
-                            Registering...
-                        </>
-                    ) : userId ? "Register as Blood Donor" : "Please Sign In"}
-                </button>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                    Age *
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name="age"
+                                                    value={formData.age}
+                                                    onChange={handleChange}
+                                                    className={`w-full px-4 py-3 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all text-white ${errors.age ? 'border-red-500' : 'border-gray-700'}`}
+                                                    placeholder="18-65"
+                                                    min="18"
+                                                    max="65"
+                                                    disabled={loading}
+                                                />
+                                                {errors.age && (
+                                                    <p className="text-red-400 text-sm mt-2">{errors.age}</p>
+                                                )}
+                                            </div>
 
-                {/* Debug Info */}
-                {process.env.NODE_ENV === 'development' && (
-                    <div className="text-center text-xs text-gray-500 mt-4 space-y-1">
-                        {userId && <p>User ID: {userId}</p>}
-                        <p>Status will be automatically set to: <span className="text-green-400">Free</span></p>
-                        <p>Donor flag will be set to: <span className="text-green-400">1 (Active)</span></p>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                    Gender *
+                                                </label>
+                                                <select
+                                                    name="gender"
+                                                    value={formData.gender}
+                                                    onChange={handleChange}
+                                                    className={`w-full px-4 py-3 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all text-white ${errors.gender ? 'border-red-500' : 'border-gray-700'}`}
+                                                    disabled={loading}
+                                                >
+                                                    <option value="" className="text-gray-500">Select Gender</option>
+                                                    {genders.map(gender => (
+                                                        <option key={gender} value={gender} className="text-white bg-gray-800">
+                                                            {gender}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {errors.gender && (
+                                                    <p className="text-red-400 text-sm mt-2">{errors.gender}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    {/* Location Information */}
+                                    <section className="bg-gray-900/50 rounded-xl p-6">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <Map className="w-5 h-5 text-red-400" />
+                                            <h3 className="text-lg font-semibold text-white">
+                                                Location Information
+                                            </h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                    Province *
+                                                </label>
+                                                <select
+                                                    name="province"
+                                                    value={formData.province}
+                                                    onChange={handleChange}
+                                                    className={`w-full px-4 py-3 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all text-white ${errors.province ? 'border-red-500' : 'border-gray-700'}`}
+                                                    disabled={loading || fetchingProvinces || provinces.length === 0}
+                                                >
+                                                    <option value="" className="text-gray-500">
+                                                        {fetchingProvinces ? 'Loading provinces...' : 'Select Province'}
+                                                    </option>
+                                                    {provinces.map((province, index) => (
+                                                        <option key={index} value={province} className="text-white bg-gray-800">
+                                                            {province}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {errors.province && (
+                                                    <p className="text-red-400 text-sm mt-2">{errors.province}</p>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                    City *
+                                                </label>
+                                                <select
+                                                    name="city"
+                                                    value={formData.city}
+                                                    onChange={handleChange}
+                                                    className={`w-full px-4 py-3 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all text-white ${errors.city ? 'border-red-500' : 'border-gray-700'}`}
+                                                    disabled={loading || !formData.province || loadingCities}
+                                                >
+                                                    <option value="" className="text-gray-500">
+                                                        {loadingCities ? 'Loading cities...' :
+                                                            !formData.province ? 'Select province first' :
+                                                                'Select City'}
+                                                    </option>
+                                                    {cities.map((city, index) => (
+                                                        <option key={index} value={city} className="text-white bg-gray-800">
+                                                            {city}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {errors.city && (
+                                                    <p className="text-red-400 text-sm mt-2">{errors.city}</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-6">
+                                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                Address
+                                            </label>
+                                            <textarea
+                                                name="address"
+                                                value={formData.address}
+                                                onChange={handleChange}
+                                                rows="3"
+                                                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all text-white resize-none"
+                                                placeholder="Enter your complete address..."
+                                                disabled={loading}
+                                            />
+                                        </div>
+                                    </section>
+
+                                    {/* Blood Information */}
+                                    <section className="bg-gray-900/50 rounded-xl p-6">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <Droplet className="w-5 h-5 text-red-400" />
+                                            <h3 className="text-lg font-semibold text-white">
+                                                Blood Information
+                                            </h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                    Blood Type *
+                                                </label>
+                                                <select
+                                                    name="blood_group"
+                                                    value={formData.blood_group}
+                                                    onChange={handleChange}
+                                                    className={`w-full px-4 py-3 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:outline-none transition-all text-white ${errors.blood_group ? 'border-red-500' : 'border-gray-700'}`}
+                                                    disabled={loading}
+                                                >
+                                                    <option value="" className="text-gray-500">Select Blood Type</option>
+                                                    {bloodTypes.map(type => (
+                                                        <option key={type} value={type} className="text-white bg-gray-800">
+                                                            {type}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {errors.blood_group && (
+                                                    <p className="text-red-400 text-sm mt-2">{errors.blood_group}</p>
+                                                )}
+                                            </div>
+
+                                            <div className="md:col-span-2">
+                                                <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-4">
+                                                    <div className="flex items-start gap-3">
+                                                        <AlertCircle className="w-5 h-5 text-red-400 mt-0.5" />
+                                                        <div>
+                                                            <h4 className="text-white font-medium mb-2">Donor Requirements</h4>
+                                                            <ul className="text-gray-300 text-sm space-y-1">
+                                                                <li>• Must be between 18-65 years old</li>
+                                                                <li>• Minimum weight: 50 kg</li>
+                                                                <li>• Should not have any chronic diseases</li>
+                                                                <li>• Last donation should be at least 3 months ago</li>
+                                                                <li>• Should not be on any medication that affects blood</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    {/* Form Actions */}
+                                    <div className="pt-8 border-t border-gray-700">
+                                        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                                            <div className="text-gray-400 text-sm">
+                                                <p className="flex items-center mb-2">
+                                                    <AlertCircle className="w-4 h-4 mr-2 text-red-400" />
+                                                    <span>* Required fields</span>
+                                                </p>
+                                                <p className="text-gray-500">
+                                                    Your information will be kept confidential and secure.
+                                                </p>
+                                            </div>
+
+                                            <div className="flex gap-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={onClose}
+                                                    disabled={loading}
+                                                    className="px-8 py-3 border-2 border-gray-600 text-gray-300 rounded-xl hover:bg-gray-800/50 hover:border-gray-500 transition-all font-medium disabled:opacity-50 min-w-[120px]"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    type="submit"
+                                                    disabled={loading || fetchingProvinces}
+                                                    className="px-8 py-3 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl hover:from-red-700 hover:to-rose-700 transition-all font-medium shadow-lg hover:shadow-xl disabled:opacity-50 min-w-[180px] flex items-center justify-center"
+                                                >
+                                                    {loading ? (
+                                                        <>
+                                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                                                            Registering...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Droplet className="w-5 h-5 mr-2" />
+                                                            Register as Donor
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        {/* Sidebar */}
+                        <div className="lg:col-span-1">
+                            <div className="sticky top-8">
+                                <div className="bg-gradient-to-br from-red-900/30 to-rose-900/30 backdrop-blur-sm border border-red-500/30 rounded-2xl p-6 mb-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="bg-red-500/20 p-2 rounded-lg">
+                                            <Contact className="w-6 h-6 text-red-400" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-white">Your Account</h3>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <p className="text-gray-400 text-sm">User ID</p>
+                                            <p className="text-white font-medium">{userId || 'Not logged in'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-400 text-sm">Status</p>
+                                            <p className="text-white font-medium capitalize">Registering as Donor</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-400 text-sm">Verification</p>
+                                            <p className="text-yellow-400 font-medium">Pending</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-orange-900/20 to-amber-900/20 backdrop-blur-sm border border-orange-500/20 rounded-2xl p-6 mb-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="bg-orange-500/20 p-2 rounded-lg">
+                                            <HeartPulse className="w-6 h-6 text-orange-400" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-white">Donor Benefits</h3>
+                                    </div>
+                                    <ul className="space-y-4">
+                                        <li className="flex items-start gap-3">
+                                            <div className="bg-orange-500/10 p-1 rounded mt-0.5">
+                                                <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                                            </div>
+                                            <span className="text-gray-300 text-sm">
+                                                Receive donation requests from patients
+                                            </span>
+                                        </li>
+                                        <li className="flex items-start gap-3">
+                                            <div className="bg-orange-500/10 p-1 rounded mt-0.5">
+                                                <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                                            </div>
+                                            <span className="text-gray-300 text-sm">
+                                                Free health checkups with each donation
+                                            </span>
+                                        </li>
+                                        <li className="flex items-start gap-3">
+                                            <div className="bg-orange-500/10 p-1 rounded mt-0.5">
+                                                <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                                            </div>
+                                            <span className="text-gray-300 text-sm">
+                                                Donation certificate and rewards
+                                            </span>
+                                        </li>
+                                        <li className="flex items-start gap-3">
+                                            <div className="bg-orange-500/10 p-1 rounded mt-0.5">
+                                                <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                                            </div>
+                                            <span className="text-gray-300 text-sm">
+                                                Priority in emergency for you and family
+                                            </span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-6 mb-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="bg-purple-500/20 p-2 rounded-lg">
+                                            <FileText className="w-6 h-6 text-purple-400" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-white">Important Notes</h3>
+                                    </div>
+                                    <ul className="space-y-3 text-gray-300 text-sm">
+                                        <li className="flex items-start gap-2">
+                                            <ShieldCheck className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                                            <span>Once registered, your status will be set to "Free" (available)</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <ShieldCheck className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                                            <span>You can toggle your availability from your profile</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <ShieldCheck className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                                            <span>Your contact will only be shared with verified patients</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <ShieldCheck className="w-5 h-5 text-red-400" />
+                                        <p className="text-gray-400 text-sm">
+                                            All data is encrypted and secure
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 text-center">
+                                    <p className="text-gray-500 text-sm">
+                                        Need help?{' '}
+                                        <button className="text-red-400 hover:text-red-300 transition-colors">
+                                            Contact Support
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                )}
-            </form>
+                </div>
+            </div>
         </div>
     );
 }
