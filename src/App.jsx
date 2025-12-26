@@ -12,6 +12,7 @@ import AuthWrapper from './components/AuthWrapper';
 import DonorRegistrationFOrm from './components/DonorRegisterForm.jsx';
 import NoofBlood from './components/NoofBlood.jsx';
 import PersonalInformation from './components/PersonalInformation';
+import BloodDonationSlider from './components/BloodDonationSlider';
 
 function App() {
   const [showSignin, setShowSignin] = useState(false);
@@ -98,6 +99,30 @@ function App() {
     setShowDonors(true);
     closeAllPopups();
   };
+
+  useEffect(() => {
+    if (showSignin || showRegister) {
+      // Save the current scroll position
+      const scrollY = window.scrollY;
+
+      // Disable scrolling
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+
+      // Return cleanup function
+      return () => {
+        // Restore scrolling
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showSignin, showRegister]); // Run when showSignin or showRegister changes
+
 
   const onLoginSuccess = (userData) => {
     const userWithDefaults = {
@@ -494,6 +519,7 @@ function App() {
       {!showDonors && !showPatients && !showPatientRegistration && !showDonorForm && !showDonationHistory && !showDonorPopup && !showFullPersonalInfo && !showPatientRequirementPopup && !showDonorRequirementPopup && (
         <div className="flex-grow">
           <div id="home"><Content /></div>
+          <div><BloodDonationSlider /></div>
           <div id="content3">
             <Content1_2
               A={() => {

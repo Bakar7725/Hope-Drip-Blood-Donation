@@ -495,7 +495,7 @@ function Content1_2({
 
             {/* Section Heading */}
             <div className="text-center mb-16">
-                <h2 className="text-4xl font-extrabold text-white sm:text-5xl">
+                <h2 className="text-4xl font-semibold text-white sm:text-5xl">
                     Find Your Path to Hope
                 </h2>
                 <p className="mt-4 text-xl text-green-100 max-w-3xl mx-auto">
@@ -629,11 +629,11 @@ function Content1_2({
                     )}
 
                     {/* Debug info */}
-                    <div className="mt-2 text-xs text-gray-400 text-center">
+                    {/* <div className="mt-2 text-xs text-gray-400 text-center">
                         <p>Debug: Loading = {loading ? 'true' : 'false'}</p>
                         <p>onPatientRegistrationShow = {typeof onPatientRegistrationShow}</p>
                         <p>User patient status: {user?.patient === 1 ? 'Registered' : 'Not Registered'}</p>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>

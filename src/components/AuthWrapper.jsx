@@ -27,14 +27,14 @@ function AuthWrapper({ defaultForm = "login", onLoginSuccess, onClose }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 perspective-[1000px]">
+        <div className="fixed inset-0  backdrop-blur-sm flex items-center justify-center p-4 z-50 perspective-[1000px]">
             {/* Outer Glow Card */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="relative w-full max-w-[900px] min-h-[550px] bg-[#0f1221] rounded-sm overflow-hidden border border-red-600 shadow-[0_0_30px_rgba(220,38,38,0.3)] flex"
+                className="relative w-full max-w-[900px] min-h-[550px] bg-[#0f1221] rounded-sm overflow-hidden  shadow-[0_0_30px_rgba(220,38,38,0.3)] flex"
             >
-                <button onClick={onClose} className="absolute top-4 right-4 z-50 text-white/50 hover:text-white transition-colors">✕</button>
+                <button onClick={onClose} className="absolute top-4 right-4 z-50 text-white/100 hover:text-white transition-colors">✕</button>
 
                 <AnimatePresence initial={false} mode="wait">
                     {formType === "login" ? (
